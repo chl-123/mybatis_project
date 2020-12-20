@@ -5,5 +5,24 @@
 <mapper namespace="com.chl.mybatis.dao.UserMapper">
     <select id="getUserById"  resultType="user">
      select * from mybatis where id = #{id}
-</select>
+    </select>
+    <!--传入多种参数的情况-->
+    <select id="getUserByIdName"  resultType="user">
+     select * from mybatis where id = #{id} and name=#{name}
+    </select>
+    <!-- parameterType：参数类型，可以省略，
+	获取自增主键的值：
+		mysql支持自增主键，自增主键值的获取，mybatis也是利用statement.getGenreatedKeys()；
+		useGeneratedKeys="true"；使用自增主键获取主键值策略
+		keyProperty；指定对应的主键属性，也就是mybatis获取到主键值以后，将这个值封装给javaBean的哪个属性
+	-->
+    <insert id="addUser" parameterType="user" useGeneratedKeys="true" keyProperty="id">
+        insert into mybatis(name ,gender) value (#{name},#{gender})
+    </insert>
+    <update id="updateUser">
+        update mybatis set name=#{name},gender=#{gender} where id=#{id}
+    </update>
+    <delete id="deleteUser">
+        delete from mybatis where id=#{id}
+    </delete>
 </mapper>

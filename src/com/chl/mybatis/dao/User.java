@@ -8,6 +8,19 @@ public class User {
     private String name;
     private String gender;
 
+    public User() {
+        super();
+    }
+
+    public User(int id, String name, String gender) {
+        super();
+        this.id = id;
+        this.name = name;
+        this.gender = gender;
+    }
+
+
+
     public int getId() {
         return id;
     }
