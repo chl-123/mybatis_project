@@ -2,13 +2,21 @@
 <!DOCTYPE mapper
         PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
         "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
-<mapper namespace="com.chl.mybatis.dao.UserMapper">
+<mapper namespace="com.chl.mybatis.dao.Mapper">
+    <!-- 如果返回值是一个集合，要写集合中的元素类型-->
+    <select id="getUserByNameReturnMap" resultType="user">
+        select * from mybatis where name like #{name}
+    </select>
+    <select id="getUserByName" resultType="user">
+        select * from mybatis where name like #{name}
+    </select>
     <select id="getUserById"  resultType="user">
      select * from mybatis where id = #{id}
     </select>
     <!--传入多种参数的情况-->
     <select id="getUserByIdName"  resultType="user">
      select * from mybatis where id = #{id} and name=#{name}
+
     </select>
     <!-- parameterType：参数类型，可以省略，
 	获取自增主键的值：
@@ -16,6 +24,60 @@
 		useGeneratedKeys="true"；使用自增主键获取主键值策略
 		keyProperty；指定对应的主键属性，也就是mybatis获取到主键值以后，将这个值封装给javaBean的哪个属性
 	-->
+    <!-- 级联查询-->
+    <resultMap id="Myuser" type="user">
+        <id column="user_id" property="id"></id>
+        <result column="name" property="name"></result>
+        <result column="gender" property="gender"></result>
+        <result column="did" property="department.id"></result>
+        <result column="dept_name" property="department.dept_name"></result>
+        <!--
+        <association property="dept" javaType="com.chl.mybatis.dao.Department">
+
+            <id column="did" property="id"></id>
+            <result column="dept_name" property="dept_name"></result>
+        </association>
+        -->
+    </resultMap>
+
+    <select id="getUserAndDept" resultMap="Myuser">
+        SELECT mybatis.id user_id, mybatis.name, mybatis.gender ,dept.id did, dept_name   FROM dept,mybatis WHERE mybatis.dept_id = dept.id AND mybatis.id=#{id}
+    </select>
+
+    <!--多表分步查询-->
+    <select id="getDeptById" resultType="department">
+        select id ,deptname  from dept where id=#{id}
+    </select>
+    <resultMap id="MyUserByStep" type="user">
+        <id column="id" property="id"></id>
+        <result column="name" property="name"></result>
+        <result column="gender" property="gender"></result>
+
+        <association property="department" select="com.chl.mybatis.dao.Mapper.getDeptById" column="dept_id"></association>
+
+    </resultMap>
+
+    <select id="getUserByIdStep" resultMap="MyUserByStep">
+        select * from mybatis where id=#{id}
+    </select>
+    <!--collection 定义关联集合封装规则-->
+    <resultMap id="Mydepartment" type="department">
+        <id column="did" property="id"></id>
+        <result column="deptname" property="deptname"></result>
+        <collection property="userList" ofType="user" >
+            <id column="userid" property="id"></id>
+            <result column="name" property="name"></result>
+            <result column="gender" property="gender"></result>
+        </collection>
+
+    </resultMap>
+
+    <select id="getDeptByIdPlus" resultMap="Mydepartment">
+        SELECT dept.id did, dept.deptname, mybatis.id userid,mybatis.`name` ,mybatis.gender FROM dept LEFT JOIN mybatis ON dept.id=mybatis.dept_id WHERE dept.id=#{id}
+    </select>
+
+
+
     <insert id="addUser" parameterType="user" useGeneratedKeys="true" keyProperty="id">
         insert into mybatis(name ,gender) value (#{name},#{gender})
     </insert>
@@ -25,4 +87,5 @@
     <delete id="deleteUser">
         delete from mybatis where id=#{id}
     </delete>
+
 </mapper>

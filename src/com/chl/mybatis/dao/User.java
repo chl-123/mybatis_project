@@ -7,16 +7,26 @@ public class User {
     private int id;
     private String name;
     private String gender;
+    private Department department;
+
+    public Department getDepartment() {
+        return department;
+    }
+
+    public void setDepartment(Department department) {
+        this.department = department;
+    }
 
     public User() {
         super();
     }
 
-    public User(int id, String name, String gender) {
+    public User(int id, String name, String gender,Department department) {
         super();
         this.id = id;
         this.name = name;
         this.gender = gender;
+        this.department = department;
     }
 
 
@@ -51,6 +61,7 @@ public class User {
                 "id=" + id +
                 ", name='" + name + '\'' +
                 ", gender='" + gender + '\'' +
+                ", department=" + department +
                 '}';
     }
 }
