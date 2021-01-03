@@ -34,6 +34,16 @@ public class Department {
         this.deptname = deptname;
     }
 
+    public Department(int id, String deptname) {
+        super();
+        this.id = id;
+        this.deptname = deptname;
+    }
+
+    public Department() {
+        super();
+    }
+
     @Override
     public String toString() {
         return "Department{" +

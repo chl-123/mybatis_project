@@ -1,0 +1,157 @@
+<?xml version="1.0" encoding="UTF-8" ?>
+<!DOCTYPE mapper
+        PUBLIC "-//mybatis.org//DTD Mapper 3.0//EN"
+        "http://mybatis.org/dtd/mybatis-3-mapper.dtd">
+<mapper namespace="com.chl.mybatis.dao.DynamicSqlMapper">
+    <cache type="org.mybatis.caches.ehcache.EhcacheCache"></cache>
+    <!-- <cache eviction="FIFO" flushInterval="60000" readOnly="false" size="1024"></cache> -->
+    <!--
+    eviction:缓存的回收策略：
+        • LRU – 最近最少使用的：移除最长时间不被使用的对象。
+        • FIFO – 先进先出：按对象进入缓存的顺序来移除它们。
+        • SOFT – 软引用：移除基于垃圾回收器状态和软引用规则的对象。
+        • WEAK – 弱引用：更积极地移除基于垃圾收集器状态和弱引用规则的对象。
+        • 默认的是 LRU。
+    flushInterval：缓存刷新间隔
+        缓存多长时间清空一次，默认不清空，设置一个毫秒值
+    readOnly:是否只读：
+        true：只读；mybatis认为所有从缓存中获取数据的操作都是只读操作，不会修改数据。
+                 mybatis为了加快获取速度，直接就会将数据在缓存中的引用交给用户。不安全，速度快
+        false：非只读：mybatis觉得获取的数据可能会被修改。
+                mybatis会利用序列化&反序列的技术克隆一份新的数据给你。安全，速度慢
+    size：缓存存放多少元素；
+    type=""：指定自定义缓存的全类名；
+            实现Cache接口即可；
+    -->
+    <!--
+• if:判断
+• choose (when, otherwise):分支选择；带了break的swtich-case
+	如果带了id就用id查，如果带了lastName就用lastName查;只会进入其中一个
+• trim 字符串截取(where(封装查询条件), set(封装修改条件))
+• foreach 遍历集合
+	 -->
+    <!-- 查询员工，要求，携带了哪个字段查询条件就带上这个字段的值 -->
+    <select id="getUserByConditionIf" resultType="user">
+        select * from user.mybatis
+        <!-- where -->
+        <where>
+            <!-- test：判断表达式（OGNL）
+            OGNL参照PPT或者官方文档。
+                   c:if  test
+            从参数中取值进行判断
+            遇见特殊符号应该去写转义字符：
+            &&：
+            -->
+            <if test="id!=null">
+                id=#{id}
+            </if>
+            <if test="name!=null &amp;&amp; name!=&quot;&quot;">
+                and name like #{name}
+            </if>
+            <!-- ognl会进行字符串与数字的转换判断  "0"==0 -->
+            <if test="gender==0 or gender==1">
+                and gender=#{gender}
+            </if>
+        </where>
+    </select>
+    <!-- 如果带了id就用id查，如果带了lastName就用lastName查;只会进入其中一个 -->
+    <select id="getUserByConditionChoose" resultType="user">
+        select * from user.mybatis
+
+            <bind name="likename" value="'%'+name+'%'"/>
+
+        <where>
+
+            <choose>
+                <when test="id!=null">
+                    id=#{id}
+                </when>
+                <when test="name!=null &amp;&amp; name!=&quot;&quot;">
+                    name like #{likename}
+                </when>
+                <otherwise>
+                    gender = #{name}
+                </otherwise>
+            </choose>
+        </where>
+    </select>
+    <!--根据需要更新User信息-->
+    <update id="updateUser">
+        <!-- Set标签的使用 -->
+        update user.mybatis
+        <set>
+            <if test="name!=null">
+                name=#{name},
+            </if>
+            <if test="gender!=null">
+                gender=#{gender}
+            </if>
+        </set>
+        where id=#{id}
+        <!--
+                Trim：更新拼串
+                update tbl_employee
+                <trim prefix="set" suffixOverrides=",">
+                    <if test="lastName!=null">
+                        last_name=#{lastName},
+                    </if>
+                    <if test="email!=null">
+                        email=#{email},
+                    </if>
+                    <if test="gender!=null">
+                        gender=#{gender}
+                    </if>
+                </trim>
+                where id=#{id}  -->
+    </update>
+    <!--public List<Employee> getUserByConditionForeach(List<Integer> ids);
+    批量查询
+    -->
+    <select id="getUserByConditionForeach" resultType="user">
+        select * from user.mybatis
+        <!--
+            collection：指定要遍历的集合：
+                list类型的参数会特殊处理封装在map中，map的key就叫list
+            item：将当前遍历出的元素赋值给指定的变量
+            separator:每个元素之间的分隔符
+            open：遍历出所有结果拼接一个开始的字符
+            close:遍历出所有结果拼接一个结束的字符
+            index:索引。遍历list的时候是index就是索引，item就是当前值
+                          遍历map的时候index表示的就是map的key，item就是map的值
+
+            #{变量名}就能取出变量的值也就是当前遍历出的元素
+          -->
+        <foreach collection="ids" item="id" separator=","
+                 open="where id in(" close=")">
+            #{id}
+        </foreach>
+    </select>
+    <!-- 批量保存 -->
+    <!--public void addEmps(@Param("emps")List<Employee> emps);  -->
+    <!--MySQL下批量保存：可以foreach遍历   mysql支持values(),(),()语法-->
+    <insert id="addUser">
+        insert into user.mybatis(
+        <include refid="insertColumn"></include>
+        )
+        values
+        <foreach collection="users" item="user" separator=",">
+            (#{user.name},#{user.gender},#{user.department.id})
+        </foreach>
+    </insert><!--   -->
+    <sql id="insertColumn">
+        <if test="_databaseId=='mysql'">
+            name,gender,dept_id
+        </if>
+    </sql>
+
+    <!-- 这种方式需要数据库连接属性allowMultiQueries=true；
+        这种分号分隔多个sql可以用于其他的批量操作（删除，修改） -->
+    <!-- <insert id="addEmps">
+        <foreach collection="emps" item="emp" separator=";">
+            insert into tbl_employee(last_name,email,gender,d_id)
+            values(#{emp.lastName},#{emp.email},#{emp.gender},#{emp.dept.id})
+        </foreach>
+    </insert> -->
+
+
+</mapper>

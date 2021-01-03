@@ -4,7 +4,7 @@ import org.apache.ibatis.type.Alias;
 
 @Alias("user")
 public class User {
-    private int id;
+    private Integer id;
     private String name;
     private String gender;
     private Department department;
@@ -21,7 +21,7 @@ public class User {
         super();
     }
 
-    public User(int id, String name, String gender,Department department) {
+    public User(Integer id, String name, String gender,Department department) {
         super();
         this.id = id;
         this.name = name;
@@ -31,11 +31,11 @@ public class User {
 
 
 
-    public int getId() {
+    public Integer getId() {
         return id;
     }
 
-    public void setId(int id) {
+    public void setId(Integer id) {
         this.id = id;
     }
 
